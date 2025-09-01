@@ -56,6 +56,7 @@ headers = {
 
 try:
     response = requests.post(url, cookies=cookie, data=data, headers=headers)
+    response = requests.post(url, cookies=cookie, data=data, headers=headers)
     print(response.text)
 except requests.exceptions.RequestException as e:
     print(f"Request failed: {e}")
@@ -66,5 +67,6 @@ except requests.exceptions.RequestException as e:
 # Effect Demonstration
 
 After executing the corresponding Python script, the program crashes as expected.
+
 
 ![image-20250831182527415](https://b55t4ck.oss-cn-shenzhen.aliyuncs.com/image/202508311825463.png)
